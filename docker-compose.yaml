@@ -1,0 +1,17 @@
+version: "3.9"
+
+volumes:
+  postgres_data:
+
+services:
+  postgres:
+    image: "postgres:16"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data:/home
+    environment:
+      POSTGRES_USER: kiosk
+      POSTGRES_DB: kiosk
+      POSTGRES_PASSWORD: kiosk

@@ -1,0 +1,40 @@
+.report-menu__button {
+  height: 50px;
+  padding: 8px;
+  color: var(--mantine-color-gray-2);
+  background-color: white;
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: var(--mantine-radius-sm);
+
+  &:hover {
+    background-color: var(--mantine-color-gray-1);
+  }
+
+  &[aria-expanded="true"] {
+    background-color: var(--mantine-color-gray-1);
+    border-color: var(--mantine-color-gray-5);
+  }
+}
+
+.report-menu__avatar {
+  border: 1px solid var(--mantine-color-gray-2);
+}
+
+.report-menu__title {
+  color: var(--mantine-color-gray-8);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.report-menu__subtitle {
+  color: var(--mantine-color-gray-5);
+  line-height: var(--mantine-line-height-xxs);
+}
+
+.report-menu__dropdown {
+  width: 241px !important;
+}
+
+.report-menu__item {
+  height: 46px;
+}
