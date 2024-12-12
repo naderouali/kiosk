@@ -1,3 +1,4 @@
+import "./styles/global.css";
 import "@mantine/core/styles.css";
 import {
   Links,

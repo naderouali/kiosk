@@ -35,6 +35,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      remix:
+        specifier: ^2.15.1
+        version: 2.15.1
     devDependencies:
       '@mantine/core':
         specifier: ^7.14.2
@@ -3096,6 +3099,10 @@ packages:
 
   remark-rehype@10.1.0:
     resolution: {integrity: sha512-EFmR5zppdBp0WQeDVZ/b66CWJipB2q2VLNFMabzDSGR66Z2fQii83G5gTBbgGEnEEA0QRussvrFHxk1HWGJskw==}
+
+  remix@2.15.1:
+    resolution: {integrity: sha512-Q+l1eOamCJli952tbyOF4D+IH9kAul7nJCc1vwJOol7s49azXOesT2CVaiksADlacO1IguGaPUM6Jx6Gd5wq+w==}
+    engines: {node: '>=18.0.0'}
 
   require-like@0.1.2:
     resolution: {integrity: sha512-oyrU88skkMtDdauHDuKVrgR+zuItqr6/c//FXzvmxRGMexSDc6hNvJInGW3LL46n+8b50RykrvwSUIIQH2LQ5A==}
@@ -7179,6 +7186,8 @@ snapshots:
       '@types/mdast': 3.0.15
       mdast-util-to-hast: 12.3.0
       unified: 10.1.2
+
+  remix@2.15.1: {}
 
   require-like@0.1.2: {}
 
