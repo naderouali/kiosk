@@ -33,8 +33,12 @@ export const action: ActionFunction = async ({ request }) => {
   const state = formData.get("state") as string;
   const ownerId = formData.get("ownerId") as string;
 
-  if (!title || !state) {
-    throw new Error("Title and state are required.");
+  if (actionType === "delete" && id) {
+    // Delete task from database
+    await prisma.task.delete({
+      where: { id },
+    });
+    return json({ success: true, id });
   }
 
   if (actionType === "create") {
@@ -103,6 +107,21 @@ export default function Checklist() {
     );
   };
 
+  const handleTaskDelete = async (id: string) => {
+    await fetch(`/checklist`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        _action: "delete",
+        id,
+      }),
+    });
+
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  };
+
   const handleCheckboxChange = async (task: Task) => {
     const updatedState = task.state === "DONE" ? "PENDING" : "DONE";
 
@@ -139,23 +158,33 @@ export default function Checklist() {
           <li
             key={task.id}
             className={`task-item ${task.state === "DONE" ? "task-done" : ""}`}
-            onClick={() => openUpdateModal(task)}
           >
-            <div className="task-details">
+            <div className="task-left">
               <input
                 type="checkbox"
                 className="task-checkbox"
                 checked={task.state === "DONE"}
                 onChange={() => handleCheckboxChange(task)}
-                onClick={(event) => event.stopPropagation()}
               />
-              <div>
-                <p className="task-title">{task.title}</p>
-                <p className="task-description">
-                  {task.description || "No description provided"}
-                </p>
-              </div>
             </div>
+
+            {/* Expanded clickable area */}
+            <button
+              className="task-clickable-area"
+              onClick={() => openUpdateModal(task)}
+            >
+              <p className="task-title">{task.title}</p>
+              <p className="task-description">
+                {task.description || "No description provided"}
+              </p>
+            </button>
+
+            <button
+              className="delete-task-btn"
+              onClick={() => handleTaskDelete(task.id)}
+            >
+              ✕
+            </button>
           </li>
         ))}
       </ul>
