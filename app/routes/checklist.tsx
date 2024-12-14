@@ -1,38 +1,13 @@
 import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { useLoaderData, Link } from "@remix-run/react";
 import { prisma } from "../prisma.server";
 import CreateTaskModal from "../components/Checklist/CreateTaskModal";
+import UpdateTaskModal from "../components/Checklist/UpdateTaskModal";
 import { useState } from "react";
 import type { Task } from "@prisma/client";
 import "../styles/checklist.css";
 
-// Action function to handle form submission
-export const action: ActionFunction = async ({ request }) => {
-  const formData = await request.formData();
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string | null;
-  const state = formData.get("state") as string;
-  const ownerId = formData.get("ownerId") as string; // Ensure this is passed in the form
-
-  // Validate required fields
-  if (!title || !state || !ownerId) {
-    throw new Error("Title, state, and owner are required.");
-  }
-
-  // Create the task
-  await prisma.task.create({
-    data: {
-      title,
-      description,
-      state,
-      owner: { connect: { id: ownerId } }, // Connects to the user by `id`
-    },
-  });
-
-  return redirect("/checklist");
-};
-
-// Loader function to fetch tasks
 export const loader: LoaderFunction = async () => {
   const tasks = await prisma.task.findMany({
     select: {
@@ -40,34 +15,139 @@ export const loader: LoaderFunction = async () => {
       title: true,
       description: true,
       state: true,
+      createdAt: true,
+      updatedAt: true,
+      ownerId: true,
     },
   });
 
-  return tasks;
+  return json(tasks);
 };
 
-// Main component for the checklist page
-export default function Checklist() {
-  const tasks = useLoaderData<Task[]>();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export const action: ActionFunction = async ({ request }) => {
+  const formData = await request.formData();
+  const actionType = formData.get("_action") as string;
+  const id = formData.get("id") as string | null;
+  const title = formData.get("title") as string;
+  const description = formData.get("description") as string | null;
+  const state = formData.get("state") as string;
+  const ownerId = formData.get("ownerId") as string;
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  if (!title || !state) {
+    throw new Error("Title and state are required.");
+  }
+
+  if (actionType === "create") {
+    if (!ownerId) {
+      throw new Error("Owner ID is required for task creation.");
+    }
+
+    const newTask = await prisma.task.create({
+      data: {
+        title,
+        description,
+        state,
+        owner: { connect: { id: ownerId } },
+      },
+    });
+
+    return json(newTask);
+  } else if (actionType === "update" && id) {
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        state,
+      },
+    });
+
+    return json(updatedTask);
+  }
+
+  return redirect("/checklist");
+};
+
+export default function Checklist() {
+  const tasksFromLoader = useLoaderData<Task[]>();
+  const [tasks, setTasks] = useState<Task[]>(tasksFromLoader);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const openCreateModal = () => setIsCreateModalOpen(true);
+  const closeCreateModal = () => setIsCreateModalOpen(false);
+
+  const openUpdateModal = (task: Task) => {
+    setSelectedTask(task);
+    setIsUpdateModalOpen(true);
+  };
+
+  const closeUpdateModal = () => {
+    setSelectedTask(null);
+    setIsUpdateModalOpen(false);
+  };
+
+  const handleTaskCreate = (newTask: Task) => {
+    setTasks((prevTasks) => {
+      if (!prevTasks.some((task) => task.id === newTask.id)) {
+        return [...prevTasks, newTask];
+      }
+      return prevTasks;
+    });
+  };
+
+  const handleTaskUpdate = (updatedTask: Task) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+    );
+  };
+
+  const handleCheckboxChange = async (task: Task) => {
+    const updatedState = task.state === "DONE" ? "PENDING" : "DONE";
+
+    const updatedTask = { ...task, state: updatedState };
+    setTasks((prevTasks) =>
+      prevTasks.map((t) => (t.id === task.id ? updatedTask : t))
+    );
+
+    await fetch(`/checklist`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        _action: "update",
+        id: task.id,
+        title: task.title,
+        description: task.description || "",
+        state: updatedState,
+      }),
+    });
+  };
 
   return (
     <div className="checklist-container">
       <h1 className="checklist-title">Task Checklist</h1>
-      <button className="create-task-btn" onClick={openModal}>
+
+      <button className="create-task-btn" onClick={openCreateModal}>
         + Create Task
       </button>
+
       <ul className="task-list">
         {tasks.map((task) => (
-          <li key={task.id} className="task-item">
+          <li
+            key={task.id}
+            className={`task-item ${task.state === "DONE" ? "task-done" : ""}`}
+            onClick={() => openUpdateModal(task)}
+          >
             <div className="task-details">
               <input
                 type="checkbox"
                 className="task-checkbox"
-                defaultChecked={task.state === "DONE"}
+                checked={task.state === "DONE"}
+                onChange={() => handleCheckboxChange(task)}
+                onClick={(event) => event.stopPropagation()}
               />
               <div>
                 <p className="task-title">{task.title}</p>
@@ -80,8 +160,20 @@ export default function Checklist() {
         ))}
       </ul>
 
-      {/* Modal for creating a task */}
-      <CreateTaskModal isOpen={isModalOpen} onClose={closeModal} />
+      <CreateTaskModal
+        isOpen={isCreateModalOpen}
+        onClose={closeCreateModal}
+        onTaskCreate={handleTaskCreate}
+      />
+
+      {selectedTask && (
+        <UpdateTaskModal
+          isOpen={isUpdateModalOpen}
+          onClose={closeUpdateModal}
+          task={selectedTask}
+          onTaskUpdate={handleTaskUpdate}
+        />
+      )}
     </div>
   );
 }

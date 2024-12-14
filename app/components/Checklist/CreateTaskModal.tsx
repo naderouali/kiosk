@@ -1,19 +1,40 @@
-import { useState } from "react";
+import { useFetcher } from "@remix-run/react";
+import { useEffect } from "react";
+import type { Task } from "@prisma/client"; // Import Task type
 import "../../styles/checklist.css";
 
 type CreateTaskModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onTaskCreate: (task: Task) => void;
 };
 
-export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
+export default function CreateTaskModal({
+  isOpen,
+  onClose,
+  onTaskCreate,
+}: CreateTaskModalProps) {
+  const fetcher = useFetcher<Task>(); // Tell fetcher to expect Task data
+
+  useEffect(() => {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      fetcher.data.id // Ensure valid task data
+    ) {
+      onTaskCreate(fetcher.data); // Add the new task
+      onClose();
+    }
+  }, [fetcher.state, fetcher.data, onClose, onTaskCreate]);
+
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal">
         <h2>Create a New Task</h2>
-        <form method="post" action="/checklist">
+        <fetcher.Form method="post" action="/checklist">
+          <input type="hidden" name="_action" value="create" />
           <input
             type="text"
             name="title"
@@ -44,7 +65,7 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
               Cancel
             </button>
           </div>
-        </form>
+        </fetcher.Form>
       </div>
     </div>
   );

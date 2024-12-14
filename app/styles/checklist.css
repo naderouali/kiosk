@@ -25,18 +25,18 @@ body {
   
   .task-item {
     display: flex;
-    align-items: center;
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 15px 20px;
-    margin-bottom: 15px;
     justify-content: space-between;
-    transition: background-color 0.2s ease-in-out;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: box-shadow 0.3s ease;
   }
   
   .task-item:hover {
-    background-color: #f3f4f6;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
   
   .task-details {
@@ -172,4 +172,53 @@ body {
   
   .modal-cancel-btn:hover {
     background-color: #e11d48;
+  }
+
+
+/* CROSSED OUT */
+.task-done .task-title {
+    text-decoration: line-through;
+    color: gray;
+  }
+  
+  .task-done .task-description {
+    text-decoration: line-through;
+    color: gray;
+  }
+
+
+
+/* DEELETE BUTTON */
+.delete-task-btn {
+    background-color: #ff4d4f;
+    border: none;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+  }
+  
+  .delete-task-btn:hover {
+    background-color: #ff7875;
+    transform: scale(1.1);
+  }
+  
+  .delete-task-btn:active {
+    background-color: #ff4d4f;
+    transform: scale(0.9);
+  }
+
+
+  .task-clickable {
+    flex-grow: 1;
+    cursor: pointer;
+  }
+  
+  .task-clickable:hover {
+    background-color: #f9f9f9;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
   }
