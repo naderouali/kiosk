@@ -1,31 +1,25 @@
 import { useFetcher } from "@remix-run/react";
 import { useEffect } from "react";
-import type { Task } from "@prisma/client"; // Import Task type
+import type { Task } from "@prisma/client";
 import "../../styles/checklist.css";
 
 type CreateTaskModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onTaskCreate: (task: Task) => void;
 };
 
-export default function CreateTaskModal({
-  isOpen,
-  onClose,
-  onTaskCreate,
-}: CreateTaskModalProps) {
-  const fetcher = useFetcher<Task>(); // Tell fetcher to expect Task data
+export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
+  const fetcher = useFetcher<Task | { error: string }>();
 
   useEffect(() => {
-    if (
-      fetcher.state === "idle" &&
-      fetcher.data &&
-      fetcher.data.id // Ensure valid task data
-    ) {
-      onTaskCreate(fetcher.data); // Add the new task
-      onClose();
+    if (fetcher.state === "idle" && fetcher.data) {
+      if ("id" in fetcher.data) {
+        window.location.reload(); // Force reload after task creation
+      } else if ("error" in fetcher.data) {
+        console.error("Error creating task:", fetcher.data.error);
+      }
     }
-  }, [fetcher.state, fetcher.data, onClose, onTaskCreate]);
+  }, [fetcher.state, fetcher.data]);
 
   if (!isOpen) return null;
 

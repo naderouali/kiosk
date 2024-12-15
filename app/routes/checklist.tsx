@@ -4,6 +4,7 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { prisma } from "../prisma.server";
 import CreateTaskModal from "../components/Checklist/CreateTaskModal";
 import UpdateTaskModal from "../components/Checklist/UpdateTaskModal";
+import SubtasksModal from "../components/Checklist/SubTasksModal";
 import { useState } from "react";
 import type { Task } from "@prisma/client";
 import "../styles/checklist.css";
@@ -34,39 +35,47 @@ export const action: ActionFunction = async ({ request }) => {
   const ownerId = formData.get("ownerId") as string;
 
   if (actionType === "delete" && id) {
-    // Delete task from database
-    await prisma.task.delete({
-      where: { id },
-    });
-    return json({ success: true, id });
+    try {
+      await prisma.task.delete({
+        where: { id },
+      });
+      return json({ success: true });
+    } catch (error) {
+      return json({ error: "Failed to delete task" }, { status: 400 });
+    }
   }
 
   if (actionType === "create") {
     if (!ownerId) {
-      throw new Error("Owner ID is required for task creation.");
+      return json({ error: "Owner ID is required" }, { status: 400 });
     }
-
-    const newTask = await prisma.task.create({
-      data: {
-        title,
-        description,
-        state,
-        owner: { connect: { id: ownerId } },
-      },
-    });
-
-    return json(newTask);
+    try {
+      const newTask = await prisma.task.create({
+        data: {
+          title,
+          description,
+          state,
+          owner: { connect: { id: ownerId } },
+        },
+      });
+      return json(newTask);
+    } catch (error) {
+      return json({ error: "Failed to create task" }, { status: 400 });
+    }
   } else if (actionType === "update" && id) {
-    const updatedTask = await prisma.task.update({
-      where: { id },
-      data: {
-        title,
-        description,
-        state,
-      },
-    });
-
-    return json(updatedTask);
+    try {
+      const updatedTask = await prisma.task.update({
+        where: { id },
+        data: {
+          title,
+          description,
+          state,
+        },
+      });
+      return json(updatedTask);
+    } catch (error) {
+      return json({ error: "Failed to update task" }, { status: 400 });
+    }
   }
 
   return redirect("/checklist");
@@ -77,6 +86,7 @@ export default function Checklist() {
   const [tasks, setTasks] = useState<Task[]>(tasksFromLoader);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isSubtasksModalOpen, setIsSubtasksModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const openCreateModal = () => setIsCreateModalOpen(true);
@@ -92,34 +102,43 @@ export default function Checklist() {
     setIsUpdateModalOpen(false);
   };
 
-  const handleTaskCreate = (newTask: Task) => {
-    setTasks((prevTasks) => {
-      if (!prevTasks.some((task) => task.id === newTask.id)) {
-        return [...prevTasks, newTask];
-      }
-      return prevTasks;
-    });
-  };
-
   const handleTaskUpdate = (updatedTask: Task) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
     );
   };
 
-  const handleTaskDelete = async (id: string) => {
-    await fetch(`/checklist`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        _action: "delete",
-        id,
-      }),
-    });
+  const openSubtasksModal = (task: Task) => {
+    setSelectedTask(task);
+    setIsSubtasksModalOpen(true);
+  };
 
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  const closeSubtasksModal = () => {
+    setSelectedTask(null);
+    setIsSubtasksModalOpen(false);
+  };
+
+  const handleTaskDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/checklist`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          _action: "delete",
+          id,
+        }),
+      });
+
+      if (response.ok) {
+        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+      } else {
+        console.error("Failed to delete task");
+      }
+    } catch (error) {
+      console.error("Error while deleting task:", error);
+    }
   };
 
   const handleCheckboxChange = async (task: Task) => {
@@ -168,7 +187,6 @@ export default function Checklist() {
               />
             </div>
 
-            {/* Expanded clickable area */}
             <button
               className="task-clickable-area"
               onClick={() => openUpdateModal(task)}
@@ -177,6 +195,13 @@ export default function Checklist() {
               <p className="task-description">
                 {task.description || "No description provided"}
               </p>
+            </button>
+
+            <button
+              className="open-subtasks-btn"
+              onClick={() => openSubtasksModal(task)} // Open SubtasksModal
+            >
+              Open Subtasks
             </button>
 
             <button
@@ -189,11 +214,7 @@ export default function Checklist() {
         ))}
       </ul>
 
-      <CreateTaskModal
-        isOpen={isCreateModalOpen}
-        onClose={closeCreateModal}
-        onTaskCreate={handleTaskCreate}
-      />
+      <CreateTaskModal isOpen={isCreateModalOpen} onClose={closeCreateModal} />
 
       {selectedTask && (
         <UpdateTaskModal
@@ -203,6 +224,12 @@ export default function Checklist() {
           onTaskUpdate={handleTaskUpdate}
         />
       )}
+
+      <SubtasksModal
+        isOpen={isSubtasksModalOpen}
+        onClose={closeSubtasksModal}
+        task={selectedTask}
+      />
     </div>
   );
 }
