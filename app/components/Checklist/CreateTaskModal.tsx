@@ -14,7 +14,7 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
       if ("id" in fetcher.data) {
-        window.location.reload(); // Force reload after task creation
+        window.location.reload(); 
       } else if ("error" in fetcher.data) {
         console.error("Error creating task:", fetcher.data.error);
       }

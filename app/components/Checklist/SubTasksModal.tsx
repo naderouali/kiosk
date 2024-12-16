@@ -61,9 +61,9 @@ export default function SubtasksModal({ isOpen, onClose, task }: SubtasksModalPr
         return;
       }
   
-      await response.json(); // Fetching the new subtask (not used since we reload)
-      setSubtaskText(""); // Clear the input
-      window.location.reload(); // Force reload
+      await response.json(); 
+      setSubtaskText("");
+      window.location.reload();
     } catch (error) {
       console.error("Error while creating subtask:", error);
     }

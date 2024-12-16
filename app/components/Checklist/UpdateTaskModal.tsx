@@ -7,7 +7,7 @@ interface UpdateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   task: Task;
-  onTaskUpdate: (updatedTask: Task) => void; // Callback for updating tasks
+  onTaskUpdate: (updatedTask: Task) => void; 
 }
 
 export default function UpdateTaskModal({
@@ -19,7 +19,6 @@ export default function UpdateTaskModal({
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state === "submitting";
 
-  // Handle fetcher response after update
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
       const updatedTask = fetcher.data as Task;
