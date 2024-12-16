@@ -25,6 +25,7 @@ body {
 
 .task-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;
   padding: 10px;
@@ -34,9 +35,20 @@ body {
   background-color: #fff;
 }
 
+.task-items-big {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .task-left {
   display: flex;
   align-items: center;
+}
+
+.task-content {
+  width: 60%;
 }
 
 .task-checkbox {
@@ -74,6 +86,8 @@ body {
   font-size: 18px;
   cursor: pointer;
   padding: 5px;
+  width: 40px;
+  height: 40px;
 }
 
 .delete-task-btn:hover {
@@ -420,4 +434,76 @@ body {
 .form-submit-btn:active {
   background-color: #047857;
   transform: scale(0.95);
+}
+
+.modal-content {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.subtasks-container {
+  margin-top: 10px;
+}
+
+.subtasks-details {
+  background-color: #dcfce7;
+  width: 100%;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.subtask-list {
+  padding-right: 20px;
+  padding-left: 20px;
+}
+
+.subtask-item {
+  padding: 10px;
+  margin: 5px;
+  /* border: 1px solid red; */
+  border-radius: 5px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: row;
+}
+
+.subtask-text {
+  font-size: 16px;
+}
+
+.subtask-text.done {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.toggle-state-btn {
+  margin-left: 10px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toggle-state-btn.btn-done {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.toggle-state-btn.btn-undone {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.subtask-done-text {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.toggle-subtask-btn {
+  margin-left: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
 }

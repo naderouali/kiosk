@@ -10,6 +10,7 @@ interface SubtasksModalProps {
 interface Subtask {
   id: string;
   text: string;
+  state: "TODO" | "DONE";
 }
 
 export default function SubtasksModal({ isOpen, onClose, task }: SubtasksModalProps) {
@@ -41,7 +42,7 @@ export default function SubtasksModal({ isOpen, onClose, task }: SubtasksModalPr
   const handleCreateSubtask = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!task || !subtaskText.trim()) return;
-
+  
     try {
       const response = await fetch(`/tasks/${task.id}/subtasks`, {
         method: "POST",
@@ -53,18 +54,49 @@ export default function SubtasksModal({ isOpen, onClose, task }: SubtasksModalPr
           text: subtaskText,
         }),
       });
-
+  
       if (!response.ok) {
         const error = await response.json();
         console.error("Error creating subtask:", error.error);
         return;
       }
-
-      const newSubtask = await response.json();
-      setSubtasks((prev) => [...prev, newSubtask]);
-      setSubtaskText("");
+  
+      await response.json(); // Fetching the new subtask (not used since we reload)
+      setSubtaskText(""); // Clear the input
+      window.location.reload(); // Force reload
     } catch (error) {
       console.error("Error while creating subtask:", error);
+    }
+  };
+
+  const handleToggleState = async (subtaskId: string) => {
+    if (!task) return;
+
+    try {
+      const response = await fetch(`/tasks/${task.id}/subtasks`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          _action: "toggle",
+          subTaskId: subtaskId,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Error toggling subtask state:", await response.text());
+        return;
+      }
+
+      const updatedSubtask = await response.json();
+      setSubtasks((prev) =>
+        prev.map((subtask) =>
+          subtask.id === updatedSubtask.id ? updatedSubtask : subtask
+        )
+      );
+    } catch (error) {
+      console.error("Error while toggling subtask state:", error);
     }
   };
 
@@ -79,13 +111,27 @@ export default function SubtasksModal({ isOpen, onClose, task }: SubtasksModalPr
         <h2 className="modal-title">Subtasks for "{task.title}"</h2>
 
         {/* Subtasks List */}
-        <div className="subtasks-container">
+        {/* <div className="subtasks-container">
           {subtasks.map((subtask) => (
             <div key={subtask.id} className="subtask-card">
-              <p className="subtask-text">{subtask.text}</p>
+              <p
+                className={`subtask-text ${
+                  subtask.state === "DONE" ? "done" : ""
+                }`}
+              >
+                {subtask.text}
+              </p>
+              <button
+                onClick={() => handleToggleState(subtask.id)}
+                className={`toggle-state-btn ${
+                  subtask.state === "DONE" ? "btn-undone" : "btn-done"
+                }`}
+              >
+                Mark as {subtask.state === "TODO" ? "DONE" : "TODO"}
+              </button>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {/* Add Subtask Form */}
         <form className="subtask-form" onSubmit={handleCreateSubtask}>

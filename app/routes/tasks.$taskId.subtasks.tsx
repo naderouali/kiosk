@@ -47,17 +47,27 @@ export const action: ActionFunction = async ({ request, params }) => {
       },
     });
     return json(newSubtask);
-  } else if (actionType === "delete") {
+  } else if (actionType === "toggle") {
     const subTaskId = formData.get("subTaskId") as string;
 
     if (!subTaskId) {
       return json({ error: "Subtask ID is required" }, { status: 400 });
     }
 
-    await prisma.subTask.delete({
+    const subtask = await prisma.subTask.findUnique({ where: { id: subTaskId } });
+
+    if (!subtask) {
+      return json({ error: "Subtask not found" }, { status: 404 });
+    }
+
+    const updatedSubtask = await prisma.subTask.update({
       where: { id: subTaskId },
+      data: {
+        state: subtask.state === "TODO" ? "DONE" : "TODO",
+      },
     });
-    return json({ success: true });
+
+    return json(updatedSubtask);
   }
 
   return json({ error: "Invalid action" }, { status: 400 });
