@@ -49,6 +49,7 @@ body {
 
 .task-content {
   width: 60%;
+  cursor: pointer;
 }
 
 .task-checkbox {

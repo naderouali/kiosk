@@ -99,7 +99,6 @@ export default function Checklist() {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isSubtasksModalOpen, setIsSubtasksModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskWithSubtasks | null>(null);
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const openCreateModal = () => setIsCreateModalOpen(true);
   const closeCreateModal = () => setIsCreateModalOpen(false);
@@ -142,19 +141,22 @@ export default function Checklist() {
           id,
         }),
       });
-
+  
       if (response.ok) {
         setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
       } else {
-        console.error("Failed to delete task");
+        const error = await response.json();
+        console.error("Failed to delete task:", error.error);
+        alert(`Error: ${error.error}`); // Provide feedback to the user
       }
     } catch (error) {
       console.error("Error while deleting task:", error);
+      alert("An unexpected error occurred while deleting the task.");
     }
   };
 
   const handleCheckboxChange = async (task: TaskWithSubtasks) => {
-    const updatedState = task.state === "DONE" ? "PENDING" : "DONE";
+    const updatedState = task.state === "DONE" ? "TODO" : "DONE";
 
     const updatedTask = { ...task, state: updatedState };
     setTasks((prevTasks) =>
@@ -188,18 +190,18 @@ export default function Checklist() {
           subTaskId: subtaskId,
         }),
       });
-  
+
       if (!response.ok) {
         console.error("Error toggling subtask state:", await response.text());
         return;
       }
-  
+
       const updatedSubtask = await response.json();
-  
+
       setTasks((prevTasks) =>
         prevTasks.map((task) => {
           if (task.id !== taskId) return task;
-  
+
           return {
             ...task,
             subtasks: task.subtasks?.map((subtask) =>
@@ -237,25 +239,32 @@ export default function Checklist() {
                 />
               </div>
 
-              <div className="task-content">
+              <div
+                className="task-content"
+                onClick={() => openUpdateModal(task)} // Open the update modal when clicking on the task
+              >
                 <p className="task-title">{task.title}</p>
                 <p className="task-description">
                   {task.description || "No description provided"}
                 </p>
               </div>
 
-              
-
               <div className="task-actions">
                 <button
                   className="open-subtasks-btn"
-                  onClick={() => openSubtasksModal(task)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the update modal
+                    openSubtasksModal(task);
+                  }}
                 >
                   Add Subtasks
                 </button>
                 <button
                   className="delete-task-btn"
-                  onClick={() => handleTaskDelete(task.id)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the update modal
+                    handleTaskDelete(task.id);
+                  }}
                 >
                   ✕
                 </button>
@@ -294,7 +303,6 @@ export default function Checklist() {
                 </ul>
               </details>
             )}
-
           </li>
         ))}
       </ul>
